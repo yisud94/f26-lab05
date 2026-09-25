@@ -1,11 +1,6 @@
+import { calculatePrice } from './pricing';
 import type { StorageProvider } from './storage/storageProvider';
 import type { Booking, Room } from './types';
-
-const PREMIUM_RATE_MULTIPLIER = 1.15;
-const LONG_BOOKING_CUTOFF = 180;
-const LONG_BOOKING_RATE_MULTIPLIER = 0.9;
-const EVENING_CUTOFF = 17 * 60;
-const EVENING_RATE_MULTIPLIER = 0.95;
 
 export interface OccupancyReport {
   roomId: string;
@@ -97,22 +92,7 @@ export class ReportGenerator {
     return Math.max(bookingStart, windowStart) < Math.min(bookingEnd, windowEnd);
   }
 
-  private durationOf(booking: Booking): number {
-    return booking.end - booking.start;
-  }
-
   private priceOf(room: Room, booking: Booking): number {
-    const minutes = this.durationOf(booking);
-    let cents = Math.round((minutes / 60) * room.hourlyRateCents);
-    if (room.premium === true) {
-      cents = Math.round(cents * PREMIUM_RATE_MULTIPLIER);
-    }
-    if (minutes >= LONG_BOOKING_CUTOFF) {
-      cents = Math.round(cents * LONG_BOOKING_RATE_MULTIPLIER);
-    }
-    if (booking.start >= EVENING_CUTOFF) {
-      cents = Math.round(cents * EVENING_RATE_MULTIPLIER);
-    }
-    return cents;
+    return calculatePrice(room, booking.start, booking.end);
   }
 }
